@@ -1177,40 +1177,77 @@ void ODEPhysics::Collide(ODECollision *_collision1, ODECollision *_collision2,
     {
       const std::string kPlowingDeadbandVelocity =
         "ignition:plowing_deadband_velocity";
-      double plowingMaxDegres =
-        collisionSdf->Get<double>(kPlowingMaxDegrees);
+      ignition::math::Angle plowingMaxAngle;
+      plowingMaxAngle.SetDegree(collisionSdf->Get<double>(kPlowingMaxDegrees));
       double plowingSaturationVelocity =
         collisionSdf->Get<double>(kPlowingSaturationVelocity);
       // Use deadband velocity = 0 if parameter is not set
       double plowingDeadbandVelocity =
         collisionSdf->Get<double>(kPlowingDeadbandVelocity, 0.0).first;
 
+      // compute slope
+      double slope = plowingMaxAngle.Radian() / (plowingSaturationVelocity - plowingDeadbandVelocity);
+
       // Assume origin of collision frame is wheel center
-      // Compute linear velocity of wheel center
+      // Compute position and linear velocity of wheel center
       // (all vectors in world coordinates unless otherwise specified)
+      ignition::math::Vector3d wheelPosition = _collision1->WorldPose().Pos();
+      ignition::math::Vector3d wheelLinearVelocity =
+        _collision1->WorldLinearVel();
 
       ignition::math::Vector3d fdir1 = fd.Normalized();
+      ignition::math::Vector3d contactNormalCopy, contactPositionCopy;
       // for each pair of contact point and normal
+      for (unsigned int c = 0; c < numc; ++c)
+      {
+        // Copy the contact normal
+        dReal *contactNormal =
+          _contactCollisions[this->dataPtr->indices[c]].normal;
+        contactNormalCopy.Set(
+          contactNormal[0], contactNormal[1], contactNormal[2]);
 
         // Compute longitudinal unit vector as normal cross fdir1
+        ignition::math::Vector3d unitLongitudinal =
+          contactNormalCopy.Cross(fdir1);
 
         // Compute longitudinal speed (dot product)
+        double wheelSpeedLongitudinal =
+          wheelLinearVelocity.Dot(unitLongitudinal);
 
         // Compute plowing angle as function of longitudinal speed
+        double plowingAngle =
+          GetRotationAngle(plowingMaxAngle.Radian(),
+          plowingDeadbandVelocity,
+          slope,
+          wheelSpeedLongitudinal);
 
         // Construct axis-angle quaternion using fdir1 and plowing angle
         ignition::math::Quaterniond plowingRotation(fdir1, plowingAngle);
 
+        // Rotate normal unit vector by plowingRotation and set normal vector
+        contactNormalCopy = plowingRotation * contactNormalCopy;
+        contactNormal[0] = contactNormalCopy[0];
+        contactNormal[1] = contactNormalCopy[1];
+        contactNormal[2] = contactNormalCopy[2];
+
         // Construct displacement vector from wheel center to contact point
+        dReal *contactPosition =
+          _contactCollisions[this->dataPtr->indices[c]].pos;
+        contactPositionCopy.Set(contactPosition[0] - wheelPosition[0],
+                                contactPosition[1] - wheelPosition[1],
+                                contactPosition[2] - wheelPosition[2]);
 
         // Rotate displacement vector by plowingRotation and set contact point
-
-        // Rotate normal unit vector by plowingRotation and set normal vector
+        contactPositionCopy = wheelPosition + plowingRotation * contactPositionCopy;
+        contactPosition[0] = contactPositionCopy[0];
+        contactPosition[1] = contactPositionCopy[1];
+        contactPosition[2] = contactPositionCopy[2];
+      }
     }
   }
 
   // Apply virtual force and torque
-  auto collisionSdf = _collision1->GetSDF();
+  auto sdf_object = _collision1->GetSDF();
 
   auto shift_contact = sdf_object->Get<bool>("foo:shift_contact");
   if (shift_contact) {
