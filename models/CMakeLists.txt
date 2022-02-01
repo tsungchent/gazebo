@@ -5,6 +5,7 @@ set (dirs
   ground_plane
   sun
   plowing_effect_trisphere_cycle
+  plowing_effect_ground_plane
 )
 
 foreach(dir ${dirs})

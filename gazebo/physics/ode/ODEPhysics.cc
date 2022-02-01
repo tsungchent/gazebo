@@ -1164,24 +1164,46 @@ void ODEPhysics::Collide(ODECollision *_collision1, ODECollision *_collision2,
     contact.fdir1[2] = fd.Z();
 
     // Check for plowing parameters if friction direction is specified
-    auto collisionSdf = _collision1->GetSDF();
+    auto collision1Sdf = _collision1->GetSDF();
+    auto collision2Sdf = _collision2->GetSDF();
+
+    const std::string kPlowingTerrain =
+      "ignition:plowing_terrain";
+    const std::string kPlowingWheel =
+      "ignition:plowing_wheel";
+
+    sdf::ElementPtr wheelSdf = nullptr;
+    sdf::ElementPtr terrainSdf = nullptr;
+
+    if (collision1Sdf->HasElement(kPlowingWheel) && 
+	collision2Sdf->HasElement(kPlowingTerrain))
+    {
+      wheelSdf = collision1Sdf;
+      terrainSdf = collision2Sdf;
+    } else if (collision2Sdf->HasElement(kPlowingWheel) && 
+	collision1Sdf->HasElement(kPlowingTerrain))
+    {
+      wheelSdf = collision2Sdf;
+      terrainSdf = collision1Sdf;
+    }
 
     const std::string kPlowingMaxDegrees =
       "ignition:plowing_max_degrees";
     const std::string kPlowingSaturationVelocity =
       "ignition:plowing_saturation_velocity";
-    if (collisionSdf->HasElement(kPlowingMaxDegrees) &&
-        collisionSdf->HasElement(kPlowingSaturationVelocity))
+    if (wheelSdf && terrainSdf &&
+	wheelSdf->HasElement(kPlowingMaxDegrees) &&
+        wheelSdf->HasElement(kPlowingSaturationVelocity))
     {
       const std::string kPlowingDeadbandVelocity =
         "ignition:plowing_deadband_velocity";
       ignition::math::Angle plowingMaxAngle;
-      plowingMaxAngle.SetDegree(collisionSdf->Get<double>(kPlowingMaxDegrees));
+      plowingMaxAngle.SetDegree(wheelSdf->Get<double>(kPlowingMaxDegrees));
       double plowingSaturationVelocity =
-        collisionSdf->Get<double>(kPlowingSaturationVelocity);
+        wheelSdf->Get<double>(kPlowingSaturationVelocity);
       // Use deadband velocity = 0 if parameter is not set
       double plowingDeadbandVelocity =
-        collisionSdf->Get<double>(kPlowingDeadbandVelocity, 0.0).first;
+        wheelSdf->Get<double>(kPlowingDeadbandVelocity, 0.0).first;
 
       // compute slope
       double slope = plowingMaxAngle.Radian() / (plowingSaturationVelocity - plowingDeadbandVelocity);

@@ -236,6 +236,7 @@
         </inertia>
       </inertial>
       <collision name="collision">
+	<ignition:plowing_wheel />
 	<ignition:plowing_max_degrees>15</ignition:plowing_max_degrees>
 	<ignition:plowing_deadband_velocity>0.5</ignition:plowing_deadband_velocity>
 	<ignition:plowing_saturation_velocity>0.63</ignition:plowing_saturation_velocity>
@@ -311,6 +312,7 @@
         </inertia>
       </inertial>
       <collision name="collision">
+	<ignition:plowing_wheel />
 	<ignition:plowing_max_degrees>15</ignition:plowing_max_degrees>
 	<ignition:plowing_deadband_velocity>0.5</ignition:plowing_deadband_velocity>
 	<ignition:plowing_saturation_velocity>0.63</ignition:plowing_saturation_velocity>
@@ -372,6 +374,7 @@
         </inertia>
       </inertial>
       <collision name="collision">
+	<ignition:plowing_wheel />
 	<ignition:plowing_max_degrees>15</ignition:plowing_max_degrees>
 	<ignition:plowing_deadband_velocity>0.5</ignition:plowing_deadband_velocity>
 	<ignition:plowing_saturation_velocity>0.63</ignition:plowing_saturation_velocity>
