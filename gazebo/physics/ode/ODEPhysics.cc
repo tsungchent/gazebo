@@ -75,7 +75,6 @@
 
 #include "gazebo/physics/ode/ODEPhysicsPrivate.hh"
 
-void ApplyPlowingEffect(dContactGeom *, gazebo::physics::ODECollision *, double, double, double);
 double GetRotationAngle(double, double, double, double);
 
 
