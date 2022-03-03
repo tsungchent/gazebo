@@ -4,6 +4,7 @@
 set (dirs
   ground_plane
   sun
+  gazebo_models
 )
 
 foreach(dir ${dirs})
